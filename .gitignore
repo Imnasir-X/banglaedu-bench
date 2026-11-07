@@ -1,0 +1,20 @@
+# Private test split: never commit, never publish. Share only test_commitments.txt.
+data/private/
+!data/private/README.md
+# Run outputs and scratch
+results/
+leaderboard/*.csv
+.scratch/
+review/*_filled*.csv
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+dist/
+build/
+*.egg-info/
+# Secrets
+.env
+# data/topic_ids.csv is committed on purpose: the one topic-id mapping file (no item text)

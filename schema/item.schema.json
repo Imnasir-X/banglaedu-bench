@@ -1,0 +1,361 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Imnasir-X/banglaedu-bench/schema/item.schema.json",
+  "title": "BanglaEdu Bench item (schema_version 0.1)",
+  "description": "Documentation of the item shape. src/banglaedu_bench/schema.py is authoritative and also enforces cross-field rules (rubric sums, recomputable numeric keys, permission for non-original sources, two reviewers for verified=true).",
+  "type": "object",
+  "required": [
+    "id",
+    "version",
+    "schema_version",
+    "canary",
+    "language",
+    "class_level",
+    "subject",
+    "chapter",
+    "topic_id",
+    "task_type",
+    "question",
+    "answer_key",
+    "marking_rubric",
+    "max_marks",
+    "explanation",
+    "difficulty",
+    "thinking_level",
+    "source",
+    "answer_check",
+    "verified",
+    "review",
+    "split"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^bebench-phy-[0-9]{3}$"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "schema_version": {
+      "const": "0.1"
+    },
+    "canary": {
+      "type": "string"
+    },
+    "language": {
+      "enum": [
+        "bn",
+        "en"
+      ]
+    },
+    "class_level": {
+      "const": [
+        9,
+        10
+      ]
+    },
+    "subject": {
+      "const": "physics"
+    },
+    "chapter": {
+      "type": "object",
+      "required": [
+        "number",
+        "title_bn"
+      ],
+      "properties": {
+        "number": {
+          "type": "integer"
+        },
+        "title_bn": {
+          "type": "string"
+        },
+        "edition": {
+          "type": "integer"
+        }
+      }
+    },
+    "topic_id": {
+      "type": "string",
+      "pattern": "^nctb:phy:c9-10:(bn|en):ch[0-9]{2}:t[0-9]{2}(:s[0-9]{2})?$"
+    },
+    "concept_key": {
+      "type": "string"
+    },
+    "topic_id_status": {
+      "enum": [
+        "aligned_nctb_data_draft",
+        "ocr_observed",
+        "provisional"
+      ]
+    },
+    "task_type": {
+      "enum": [
+        "mcq",
+        "short_answer",
+        "srijonshil"
+      ]
+    },
+    "question": {
+      "type": "string",
+      "description": "Question text; for srijonshil, the stimulus (উদ্দীপক)."
+    },
+    "options": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {
+        "type": "object",
+        "required": [
+          "label",
+          "text"
+        ],
+        "properties": {
+          "label": {
+            "enum": [
+              "ক",
+              "খ",
+              "গ",
+              "ঘ"
+            ]
+          },
+          "text": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "parts": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {
+        "$ref": "#/$defs/part"
+      }
+    },
+    "answer_key": {
+      "type": "object",
+      "description": "mcq: {label}; short_answer: shortKey; srijonshil: {parts: {label: reference}}"
+    },
+    "marking_rubric": {
+      "$ref": "#/$defs/rubric"
+    },
+    "max_marks": {
+      "type": "number"
+    },
+    "explanation": {
+      "type": "string"
+    },
+    "difficulty": {
+      "enum": [
+        "easy",
+        "medium",
+        "hard"
+      ]
+    },
+    "thinking_level": {
+      "enum": [
+        "knowledge",
+        "comprehension",
+        "application",
+        "higher_ability"
+      ]
+    },
+    "source": {
+      "type": "object",
+      "required": [
+        "type",
+        "citation",
+        "author",
+        "created",
+        "license"
+      ],
+      "properties": {
+        "type": {
+          "enum": [
+            "original_syllabus_aligned",
+            "licensed_reuse",
+            "textbook_exercise",
+            "board_past_paper"
+          ]
+        },
+        "citation": {
+          "type": "string"
+        },
+        "author": {
+          "type": "string"
+        },
+        "created": {
+          "type": "string",
+          "format": "date"
+        },
+        "license": {
+          "type": "string"
+        },
+        "permission": {
+          "type": "string"
+        },
+        "syllabus_reference": {
+          "type": "string"
+        }
+      }
+    },
+    "answer_check": {
+      "type": "object",
+      "properties": {
+        "method": {
+          "enum": [
+            "python_expression",
+            "author_physics_knowledge",
+            "reference_checked",
+            "per_part"
+          ]
+        },
+        "expression": {
+          "type": "string"
+        },
+        "option_rel_tol": {
+          "type": "number"
+        }
+      }
+    },
+    "verified": {
+      "type": "boolean"
+    },
+    "review": {
+      "type": "object",
+      "properties": {
+        "reviewers": {
+          "type": "array"
+        },
+        "adjudicator": {
+          "type": "string"
+        },
+        "final_verdict": {
+          "type": "string"
+        }
+      }
+    },
+    "split": {
+      "enum": [
+        "dev",
+        "test"
+      ]
+    }
+  },
+  "$defs": {
+    "rubric": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "criterion",
+          "marks"
+        ],
+        "properties": {
+          "criterion": {
+            "type": "string"
+          },
+          "marks": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "shortKey": {
+      "type": "object",
+      "required": [
+        "text"
+      ],
+      "properties": {
+        "text": {
+          "type": "string"
+        },
+        "aliases": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "numeric": {
+          "type": "object",
+          "required": [
+            "value"
+          ],
+          "properties": {
+            "value": {
+              "type": "number"
+            },
+            "unit": {
+              "type": "string"
+            },
+            "rel_tol": {
+              "type": "number"
+            },
+            "abs_tol": {
+              "type": "number"
+            },
+            "alt_values": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            }
+          }
+        }
+      }
+    },
+    "part": {
+      "type": "object",
+      "required": [
+        "label",
+        "thinking_level",
+        "marks",
+        "question",
+        "answer_key",
+        "marking_rubric",
+        "answer_check"
+      ],
+      "properties": {
+        "label": {
+          "enum": [
+            "ক",
+            "খ",
+            "গ",
+            "ঘ"
+          ]
+        },
+        "thinking_level": {
+          "enum": [
+            "knowledge",
+            "comprehension",
+            "application",
+            "higher_ability"
+          ]
+        },
+        "marks": {
+          "enum": [
+            1,
+            2,
+            3,
+            4
+          ]
+        },
+        "question": {
+          "type": "string"
+        },
+        "answer_key": {
+          "$ref": "#/$defs/shortKey"
+        },
+        "marking_rubric": {
+          "$ref": "#/$defs/rubric"
+        },
+        "answer_check": {
+          "type": "object"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,41 @@
+provisional_id,shared_topic_id,section,decided_by,note
+nctb:phy:c9-10:bn:ch04:t91,nctb:phy:c9-10:bn:ch04:t01,4.1,agent 2026-11-07,কাজ = 4.1 কাজ
+nctb:phy:c9-10:bn:ch04:t92,nctb:phy:c9-10:bn:ch04:t03:s01,4.3.1,agent 2026-11-07,গতিশক্তি = 4.3.1 গতিশক্তি
+nctb:phy:c9-10:bn:ch04:t93,nctb:phy:c9-10:bn:ch04:t05:s01,4.5.1,agent 2026-11-07,spans 4.3.2 বিভব শক্তি and 4.5.1 শক্তির নিত্যতা; mapped to 4.5.1 (reviewer: confirm per item)
+nctb:phy:c9-10:bn:ch04:t94,nctb:phy:c9-10:bn:ch04:t07,4.7,agent 2026-11-07,ক্ষমতা = 4.7 ক্ষমতা
+nctb:phy:c9-10:bn:ch04:t95,nctb:phy:c9-10:bn:ch04:t08,4.8,agent 2026-11-07,কর্মদক্ষতা = 4.8 কর্মদক্ষতা
+nctb:phy:c9-10:bn:ch05:t91,nctb:phy:c9-10:bn:ch05:t02,5.2,agent 2026-11-07,ঘনত্ব = 5.2 ঘনত্ব
+nctb:phy:c9-10:bn:ch05:t92,nctb:phy:c9-10:bn:ch05:t01,5.1,agent 2026-11-07,চাপ = 5.1 চাপ
+nctb:phy:c9-10:bn:ch05:t93,nctb:phy:c9-10:bn:ch05:t03,5.3,agent 2026-11-07,তরলের চাপ = 5.3 তরলের ভেতর চাপ
+nctb:phy:c9-10:bn:ch05:t94,nctb:phy:c9-10:bn:ch05:t03:s03,5.3.3,agent 2026-11-07,প্যাসকেলের সূত্র = 5.3.3
+nctb:phy:c9-10:bn:ch05:t95,nctb:phy:c9-10:bn:ch05:t03:s01,5.3.1,agent 2026-11-07,প্লবতা ও আর্কিমিডিসের নীতি = 5.3.1 আর্কিমিডিসের নীতি এবং প্লবতা
+nctb:phy:c9-10:bn:ch05:t96,nctb:phy:c9-10:bn:ch05:t04,5.4,agent 2026-11-07,বায়ুমণ্ডলীয় চাপ = 5.4 বাতাসের চাপ
+nctb:phy:c9-10:bn:ch05:t97,nctb:phy:c9-10:bn:ch05:t05,5.5,agent 2026-11-07,স্থিতিস্থাপকতা ও হুকের সূত্র = 5.5 স্থিতিস্থাপকতা
+nctb:phy:c9-10:bn:ch06:t91,nctb:phy:c9-10:bn:ch06:t02,6.2,agent 2026-11-07,temperature scales are taught in 6.2 (6.2.1 relates the scales)
+nctb:phy:c9-10:bn:ch06:t92,nctb:phy:c9-10:bn:ch06:t05,6.5,agent 2026-11-07,আপেক্ষিক তাপ = 6.5; তাপধারণ ক্ষমতা is in the same section
+nctb:phy:c9-10:bn:ch06:t93,nctb:phy:c9-10:bn:ch06:t04,6.4,agent 2026-11-07,সুপ্ততাপ is taught inside 6.4 (PDF pp.180-181)
+nctb:phy:c9-10:bn:ch07:t91,nctb:phy:c9-10:bn:ch07:t02:s02,7.2.2,agent 2026-11-07,তরঙ্গ ও তরঙ্গের প্রকারভেদ = 7.2.2 তরঙ্গের প্রকারভেদ
+nctb:phy:c9-10:bn:ch07:t92,nctb:phy:c9-10:bn:ch07:t02:s03,7.2.3,agent 2026-11-07,velocity/frequency/wavelength = 7.2.3 তরঙ্গ-সংশ্লিষ্ট রাশি
+nctb:phy:c9-10:bn:ch07:t93,nctb:phy:c9-10:bn:ch07:t03:s02,7.3.2,agent 2026-11-07,শব্দের বেগ ও মাধ্যম = 7.3.2 শব্দের বেগের পার্থক্য
+nctb:phy:c9-10:bn:ch07:t94,nctb:phy:c9-10:bn:ch07:t03:s01,7.3.1,agent 2026-11-07,প্রতিধ্বনি = 7.3.1
+nctb:phy:c9-10:bn:ch07:t95,nctb:phy:c9-10:bn:ch07:t03,7.3,agent 2026-11-07,range of hearing is taught in 7.3 শব্দ তরঙ্গ (PDF p.204)
+nctb:phy:c9-10:bn:ch08:t91,nctb:phy:c9-10:bn:ch08:t02:s01,8.2.1,agent 2026-11-07,প্রতিফলনের সূত্র = 8.2.1
+nctb:phy:c9-10:bn:ch08:t92,nctb:phy:c9-10:bn:ch08:t04,8.4,agent 2026-11-07,গোলীয় দর্পণ ও ফোকাস দূরত্ব = 8.4 গোলীয় আয়না
+nctb:phy:c9-10:bn:ch08:t93,nctb:phy:c9-10:bn:ch08:t07,8.7,agent 2026-11-07,spans image formation (8.5.1/8.6.1) and 8.7 বিবর্ধন; mapped to 8.7 (reviewer: confirm per item)
+nctb:phy:c9-10:bn:ch08:t94,nctb:phy:c9-10:bn:ch08:t08,8.8,agent 2026-11-07,দর্পণের ব্যবহার = 8.8 আয়নার ব্যবহার
+nctb:phy:c9-10:bn:ch09:t91,nctb:phy:c9-10:bn:ch09:t01,9.1,agent 2026-11-07,প্রতিসরণ ও প্রতিসরাঙ্ক = 9.1 (9.1.2 আপেক্ষিক প্রতিসরণাঙ্ক inside)
+nctb:phy:c9-10:bn:ch09:t92,nctb:phy:c9-10:bn:ch09:t02,9.2,agent 2026-11-07,পূর্ণ অভ্যন্তরীণ প্রতিফলন = 9.2
+nctb:phy:c9-10:bn:ch09:t93,nctb:phy:c9-10:bn:ch09:t04:s03,9.4.3,agent 2026-11-07,লেন্সের ক্ষমতা = 9.4.3
+nctb:phy:c9-10:bn:ch09:t94,,,agent 2026-11-07,NOT IN THE 2026 BOOK: chapter 9 has no section on eye defects (ends at 9.4.3); left provisional; owner decides keep/drop
+nctb:phy:c9-10:bn:ch10:t91,nctb:phy:c9-10:bn:ch10:t04,10.4,agent 2026-11-07,কুলম্বের সূত্র is taught in 10.4 বৈদ্যুতিক বল
+nctb:phy:c9-10:bn:ch11:t91,nctb:phy:c9-10:bn:ch11:t01,11.1,agent 2026-11-07,তড়িৎপ্রবাহ ও আধান = 11.1 বিদ্যুৎপ্রবাহ
+nctb:phy:c9-10:bn:ch11:t92,nctb:phy:c9-10:bn:ch11:t02:s01,11.2.1,agent 2026-11-07,ওহমের সূত্র = 11.2.1
+nctb:phy:c9-10:bn:ch11:t93,nctb:phy:c9-10:bn:ch11:t02:s02,11.2.2,agent 2026-11-07,রোধ = 11.2.2 রোধ
+nctb:phy:c9-10:bn:ch11:t94,nctb:phy:c9-10:bn:ch11:t02:s04,11.2.4,agent 2026-11-07,spans 11.2.4 (series) and 11.2.5 (parallel); mapped to 11.2.4 (reviewer: confirm per item)
+nctb:phy:c9-10:bn:ch11:t95,nctb:phy:c9-10:bn:ch11:t03,11.3,agent 2026-11-07,তড়িৎ ক্ষমতা = 11.3
+nctb:phy:c9-10:bn:ch11:t96,nctb:phy:c9-10:bn:ch11:t05,11.5,agent 2026-11-07,বিদ্যুতের নিরাপদ ব্যবহার = 11.5
+nctb:phy:c9-10:bn:ch12:t91,nctb:phy:c9-10:bn:ch12:t03,12.3,agent 2026-11-07,তড়িৎচুম্বকীয় আবেশ = 12.3
+nctb:phy:c9-10:bn:ch12:t92,nctb:phy:c9-10:bn:ch12:t03:s02,12.3.2,agent 2026-11-07,ট্রান্সফর্মার = 12.3.2
+nctb:phy:c9-10:bn:ch12:t93,nctb:phy:c9-10:bn:ch12:t02:s04,12.2.4,agent 2026-11-07,বৈদ্যুতিক মোটর = 12.2.4 ডিসি মোটর
+nctb:phy:c9-10:bn:ch13:t91,nctb:phy:c9-10:bn:ch13:t01,13.1,agent 2026-11-07,alpha/beta/gamma rays are 13.1.1-13.1.3 under 13.1 তেজস্ক্রিয়তা
+nctb:phy:c9-10:bn:ch13:t92,nctb:phy:c9-10:bn:ch13:t01:s04,13.1.4,agent 2026-11-07,অর্ধায়ু = 13.1.4
