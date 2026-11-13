@@ -35,11 +35,16 @@ def cmd_validate(a) -> int:
 
 
 def cmd_stats(a) -> int:
+    from .curriculum import class_band, resolve_stream
+
     items = load_items(a.split)
     _print(
         {
             "n": len(items),
             "task_type": Counter(i["task_type"] for i in items),
+            "class_band": Counter(class_band(i["class_level"]) for i in items),
+            "subject": Counter(i["subject"] for i in items),
+            "stream": Counter(resolve_stream(i) for i in items),
             "chapter": dict(sorted(Counter(i["chapter"]["number"] for i in items).items())),
             "difficulty": Counter(i["difficulty"] for i in items),
             "thinking_level": Counter(i["thinking_level"] for i in items),
@@ -52,12 +57,50 @@ def cmd_stats(a) -> int:
     return 0
 
 
-def _adapter_kwargs(a) -> dict:
+def cmd_subjects(_a) -> int:
+    from .curriculum import SUBJECTS
+
+    for subject in SUBJECTS.values():
+        classes = sorted({c for offer in subject.offers for c in offer.classes})
+        streams = []
+        for offer in subject.offers:
+            for stream in offer.streams:
+                if stream not in streams:
+                    streams.append(stream)
+        print(
+            f"{subject.key}\t{subject.name_bn}\tclasses={','.join(map(str, classes))}\t"
+            f"streams={','.join(streams)}\thsc_papers={subject.hsc_papers}"
+        )
+    return 0
+
+
+def cmd_coverage(a) -> int:
+    from .curriculum import coverage
+
+    report = coverage(load_items(a.split))
+    _print({k: v for k, v in report.items() if k != "slots"})
+    for slot in report["slots"]:
+        if a.missing and slot["n_items"]:
+            continue
+        print(
+            f"{slot['class_band']:8} {slot['stream']:10} {slot['subject']:28} "
+            f"items={slot['n_items']} verified={slot['n_verified']}"
+        )
+    return 0
+
+
+def _adapter_kwargs(a, spec: str = "") -> dict:
     kw = {}
     if getattr(a, "base_url", None):
         kw["base_url"] = a.base_url
     if getattr(a, "api_key_env", None):
         kw["api_key_env"] = a.api_key_env
+    if spec.startswith("mock-"):
+        return kw
+    if getattr(a, "temperature", None) is not None:
+        kw["temperature"] = a.temperature
+    if getattr(a, "max_tokens", None) is not None:
+        kw["max_tokens"] = a.max_tokens
     return kw
 
 
@@ -67,8 +110,8 @@ def cmd_run(a) -> int:
     from .harness import run
     from .judge import Judge
 
-    model = make_adapter(a.model, **_adapter_kwargs(a))
-    judge = Judge(make_adapter(a.judge)) if a.judge else None
+    model = make_adapter(a.model, **_adapter_kwargs(a, a.model))
+    judge = Judge(make_adapter(a.judge, **_adapter_kwargs(a, a.judge))) if a.judge else None
     grounding = (
         make_grounding(
             a.grounding,
@@ -96,21 +139,24 @@ def cmd_run(a) -> int:
             workers=a.workers,
             limit=a.limit,
         )
+    except ValueError as exc:
+        print(exc)
+        return 1
     finally:
         grounding.close()
     print(f"wrote {out}/predictions.jsonl and summary.json")
     _print(
         {
-            k: summary[k]
-            for k in (
-                "model",
-                "grounding_mode",
-                "n_items",
-                "overall_pct_marks",
-                "macro_task_type_pct",
-                "n_errors",
-                "n_unparsed",
-            )
+            "model": summary["model"],
+            "grounding_mode": summary["grounding_mode"],
+            "n_items": summary["n_items"],
+            "overall_pct_marks": summary["overall_pct_marks"],
+            "overall_pct_ci95": summary["threshold"]["overall_pct_ci95"],
+            "by_band": summary["threshold"]["by_band"],
+            "comparable": summary["threshold"]["comparable"],
+            "threshold_status": summary["threshold"]["status"],
+            "n_errors": summary["n_errors"],
+            "n_unparsed": summary["n_unparsed"],
         }
     )
     return 0
@@ -166,8 +212,9 @@ def cmd_review_apply(a) -> int:
 def cmd_calib_sheet(a) -> int:
     from .calibration import make_sheet
 
+    paths = [resolve_split(split) for split in a.split]
     Path(a.out).parent.mkdir(parents=True, exist_ok=True)
-    n = make_sheet(resolve_split(a.split), a.predictions, a.out, n=a.n, seed=a.seed)
+    n = make_sheet(paths, a.predictions, a.out, n=a.n, seed=a.seed)
     print(f"wrote {n} answers to {a.out} for human scoring (target 50)")
     return 0
 
@@ -177,10 +224,15 @@ def cmd_calib_run(a) -> int:
     from .calibration import run_calibration
     from .judge import Judge
 
-    rep = run_calibration(a.sheet, Judge(make_adapter(a.judge, **_adapter_kwargs(a))), a.out_csv)
+    rep = run_calibration(
+        a.sheet, Judge(make_adapter(a.judge, **_adapter_kwargs(a, a.judge))), a.out_csv
+    )
     _print(rep)
     if a.report:
         Path(a.report).write_text(json.dumps(rep, ensure_ascii=False, indent=2), encoding="utf-8")
+    if not rep.get("decision", {}).get("accepted"):
+        print("judge not accepted")
+        return 2
     return 0
 
 
@@ -205,9 +257,17 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("paths", nargs="+", help="split names (dev/test) or JSONL paths")
     s.set_defaults(fn=cmd_validate)
 
-    s = sub.add_parser("stats", help="counts by type, chapter, level")
+    s = sub.add_parser("stats", help="counts by type, class band, subject, stream")
     s.add_argument("split", nargs="?", default="dev")
     s.set_defaults(fn=cmd_stats)
+
+    s = sub.add_parser("subjects", help="list every subject the harness can score")
+    s.set_defaults(fn=cmd_subjects)
+
+    s = sub.add_parser("coverage", help="items present against every subject slot")
+    s.add_argument("split", nargs="?", default="dev")
+    s.add_argument("--missing", action="store_true", help="print only slots with no items")
+    s.set_defaults(fn=cmd_coverage)
 
     s = sub.add_parser("run", help="evaluate a model")
     s.add_argument("--model", required=True, help="mock-oracle | ollama:<m> | openrouter:<m> ...")
@@ -223,6 +283,12 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--mcp-search-arg", default="query")
     s.add_argument("--base-url")
     s.add_argument("--api-key-env")
+    s.add_argument(
+        "--temperature", type=float, help="default 0. A different value is not comparable."
+    )
+    s.add_argument(
+        "--max-tokens", type=int, help="default 1024. A different value is not comparable."
+    )
     s.add_argument("--workers", type=int, default=4)
     s.add_argument("--limit", type=int)
     s.add_argument("--out", default="results")
@@ -253,7 +319,7 @@ def build_parser() -> argparse.ArgumentParser:
     s.set_defaults(fn=cmd_review_apply)
 
     s = sub.add_parser("calib-sheet", help="sample written answers for human scoring")
-    s.add_argument("--split", default="dev")
+    s.add_argument("--split", nargs="+", default=["dev"])
     s.add_argument("--predictions", nargs="+", required=True)
     s.add_argument("--n", type=int, default=50)
     s.add_argument("--seed", type=int, default=13)

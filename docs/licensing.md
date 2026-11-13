@@ -11,23 +11,26 @@ Not legal advice. Sources and reasoning are in `docs/research.md` §3.
 | Textbook content | **Not copied, not mirrored** | Items cite chapter and section ids only. Grounding uses `nctb-data` (structure, titles, objectives, page pointers), not book text. |
 | Board past papers, textbook exercises | **Excluded** | Schema refuses them unless `source.permission` records written permission. |
 
-## Needs the owner's decision before release
+## Dataset licence, decided 2026-11-13
 
-1. **Dataset licence for the items.** Items are currently tagged
-   `CC BY 4.0 (proposed; owner to confirm)`. Options:
-   * **CC BY 4.0** (proposed): maximum reuse, including commercial; attribution required.
-     Fits a public benchmark and lets the MCP and other tools redistribute it.
-   * **CC BY-SA 4.0**: derivatives must stay open.
-   * **CC BY-NC 4.0**: blocks commercial use; many labs then cannot run it in products or
-     evals, and it is harder to combine with the MIT code.
-   Whichever is chosen, set `DATA_LICENSE` in `scripts/build_seed.py`, rebuild, and update
-   the card.
-2. **Test split terms.** The private test split is not released. Decide whether third
+The item text is **CC BY 4.0**. Attribution is required. Commercial use is allowed.
+The code stays MIT. The canary, not the licence, is what warns training crawlers off.
+
+CC BY-SA would force every derivative bench to stay under the same licence.
+CC BY-NC would stop many labs from running the set inside a product or a public
+leaderboard. CC BY 4.0 is the licence that lets the benchmark travel with the MIT code.
+
+`DATA_LICENSE` in `scripts/build_seed.py` and `scripts/build_college.py` is
+`CC BY 4.0`. Public items use that string. The private test split picks it up
+on the next rebuild from `data/private/source/`.
+
+## Still open before a wider release
+1. **Test split terms.** The private test split is not released. Decide whether third
    parties may request evaluation (you run their model) and under what terms.
-3. **Reviewer contributions.** Teachers' corrections become part of the items; get their
-   agreement to the chosen licence and decide how they are credited.
-4. **Topic-id data from `nctb-data`.** Section titles and numbers come from the NCTB book.
+2. **Reviewer contributions.** Teachers' corrections become part of the items; get their
+   agreement to CC BY 4.0 and decide how they are credited.
+3. **Topic-id data from `nctb-data`.** Section titles and numbers come from the NCTB book.
    Short titles and numbering are likely fine as factual metadata, but the licence of the
    `nctb-data` layer is owned by the nctb-mcp project; keep the two consistent.
-5. **Whether to ever seek NCTB permission** to include official textbook exercises or
+4. **Whether to ever seek NCTB permission** to include official textbook exercises or
    board questions in a later, separately licensed split.

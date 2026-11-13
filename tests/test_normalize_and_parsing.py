@@ -6,7 +6,13 @@ from banglaedu_bench.normalize import (
     label_index,
     normalize_text,
 )
-from banglaedu_bench.scoring import extract_numbers, numeric_match, parse_mcq, parse_numeric
+from banglaedu_bench.scoring import (
+    extract_numbers,
+    numeric_match,
+    parse_mcq,
+    parse_numeric,
+    text_match,
+)
 
 OPTS = [
     {"label": "ক", "text": "৬০ cm"},
@@ -69,6 +75,11 @@ def test_extract_numbers_formats():
     assert extract_numbers("৯ × ১০^-৩ N") == [pytest.approx(9e-3)]
     assert extract_numbers("১/৮ অংশ") == [0.125]
     assert extract_numbers("-5 এবং 3.5") == [-5.0, 3.5]
+
+
+def test_english_answer_is_not_cut_at_ans_inside_a_word():
+    key = {"text": "hypertext transfer protocol", "aliases": ["Hypertext Transfer Protocol"]}
+    assert text_match("উত্তর: hypertext transfer protocol", key)
 
 
 def test_parse_numeric_prefers_marker():

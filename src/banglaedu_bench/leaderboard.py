@@ -52,8 +52,10 @@ def build_rows(summaries: list[dict], split: str) -> list[dict]:
             "short_answer": _pct(ref, "task_type", "short_answer"),
             "srijonshil": _pct(ref, "task_type", "srijonshil"),
             "chapters": {k: v["pct"] for k, v in ref.get("by", {}).get("chapter", {}).items()},
+            "bands": {k: v["pct"] for k, v in ref.get("by", {}).get("class_band", {}).items()},
             "prompt_version": ref.get("prompt_version"),
             "n_verified_items": ref.get("n_verified_items"),
+            "comparable": (ref.get("threshold") or {}).get("comparable"),
         }
         rows.append(row)
     rows.sort(key=lambda r: -(r["overall_no_mcp"] or r["overall_mcp_search"] or 0))
@@ -62,10 +64,12 @@ def build_rows(summaries: list[dict], split: str) -> list[dict]:
 
 def to_markdown(rows: list[dict], split: str) -> str:
     out = [
-        f"## BanglaEdu Bench v0.1 — {split} split (Class 9-10 Physics, Bangla)",
+        f"## BanglaEdu Bench — {split} split",
         "",
-        "Scores are % of available marks. MCQ is exact match; numeric answers use tolerance; "
-        "written answers use the named judge. Δ = with MCP (search grounding) minus without.",
+        "Scores are % of available marks. Read them by class band: primary (5), junior (6–8),",
+        "SSC (9–10) and college HSC (11–12). One average is not a pass. MCQ is exact match;",
+        "numeric answers use tolerance; written answers use the named judge.",
+        "Δ = with MCP (search grounding) minus without.",
         "",
         "| # | Model | Judge | Items | No MCP | MCP (search) | Δ | MCP (topic, upper bound) "
         "| MCQ | Short | Srijonshil |",
@@ -79,6 +83,19 @@ def to_markdown(rows: list[dict], split: str) -> str:
             f"| {_fmt(r['overall_mcp_topic'])} | {_fmt(r['mcq'])} | {_fmt(r['short_answer'])} "
             f"| {_fmt(r['srijonshil'])} |"
         )
+    bands = [b for b in ("primary", "junior", "ssc", "hsc") if any(b in r["bands"] for r in rows)]
+    if bands:
+        out += ["", "### By class band (no-MCP run where available)", ""]
+        out.append("| Model | " + " | ".join(bands) + " |")
+        out.append("|---|" + "---|" * len(bands))
+        for r in rows:
+            out.append(
+                "| "
+                + r["model"]
+                + " | "
+                + " | ".join(_fmt(r["bands"].get(b)) for b in bands)
+                + " |"
+            )
     chapters = sorted({c for r in rows for c in r["chapters"]})
     if chapters:
         out += ["", "### Per-chapter breakdown (no-MCP run where available)", ""]
@@ -105,7 +122,7 @@ def write(rows: list[dict], split: str, out_dir: str | Path) -> tuple[Path, Path
     md = out_dir / f"leaderboard_{split}.md"
     md.write_text(to_markdown(rows, split), encoding="utf-8")
     cs = out_dir / f"leaderboard_{split}.csv"
-    cols = [k for k in (rows[0] if rows else {}) if k != "chapters"]
+    cols = [k for k in (rows[0] if rows else {}) if k not in {"chapters", "bands"}]
     with cs.open("w", encoding="utf-8", newline="") as fh:
         w = csv.DictWriter(fh, fieldnames=cols)
         w.writeheader()

@@ -1,0 +1,24 @@
+{
+  "accepted": false,
+  "reasons": [
+    "0 human-scored answers; the bar is 50",
+    "pass/fail kappa is below 0.6",
+    "within-1-mark agreement is below 90%"
+  ],
+  "real_local_models": false,
+  "models": [
+    "mock-random",
+    "mock-constant",
+    "mock-grounded"
+  ],
+  "model_note": "Offline mocks, because no local model server was used for these replies. mock-grounded had no MCP bundle, so its written answers match mock-constant. A teacher still has to score human_score blind.",
+  "splits": [
+    "dev",
+    "college"
+  ],
+  "private_split_used": false,
+  "third_party_api": false,
+  "n_rows": 50,
+  "human_score_filled": 0,
+  "n_compared": 0
+}

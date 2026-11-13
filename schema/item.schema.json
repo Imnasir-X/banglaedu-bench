@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/Imnasir-X/banglaedu-bench/schema/item.schema.json",
-  "title": "BanglaEdu Bench item (schema_version 0.1)",
-  "description": "Documentation of the item shape. src/banglaedu_bench/schema.py is authoritative and also enforces cross-field rules (rubric sums, recomputable numeric keys, permission for non-original sources, two reviewers for verified=true).",
+  "title": "BanglaEdu Bench item (schema 0.1 legacy physics, or 0.2 any subject)",
+  "description": "Documentation of the item shape. src/banglaedu_bench/schema.py is authoritative. Schema 0.1 is the Class 9-10 physics seed (id bebench-phy-001). Schema 0.2 is class 5-12 and every subject in src/banglaedu_bench/curriculum.py, with stream and, for college two-paper subjects, paper 1 in class 11 and paper 2 in class 12.",
   "type": "object",
   "required": [
     "id",
@@ -31,14 +31,14 @@
   "properties": {
     "id": {
       "type": "string",
-      "pattern": "^bebench-phy-[0-9]{3}$"
+      "description": "0.1: bebench-phy-001. 0.2: bebench-<topic_code>-c<band>-001."
     },
     "version": {
       "type": "string",
       "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
     },
     "schema_version": {
-      "const": "0.1"
+      "enum": ["0.1", "0.2"]
     },
     "canary": {
       "type": "string"
@@ -50,13 +50,22 @@
       ]
     },
     "class_level": {
-      "const": [
-        9,
-        10
-      ]
+      "type": "array",
+      "items": {"type": "integer", "minimum": 5, "maximum": 12},
+      "minItems": 1,
+      "description": "One band only: [5], a subset of 6-8, [9, 10], or class 11 / 12."
     },
     "subject": {
-      "const": "physics"
+      "type": "string",
+      "description": "A key from the curriculum catalog. Schema 0.1 allows only physics."
+    },
+    "stream": {
+      "enum": ["common", "science", "commerce", "arts"],
+      "description": "Required on schema 0.2. commerce is business studies. arts is humanities."
+    },
+    "paper": {
+      "enum": [1, 2],
+      "description": "College two-paper subjects: 1 in class 11, 2 in class 12."
     },
     "chapter": {
       "type": "object",
@@ -208,6 +217,7 @@
           "enum": [
             "python_expression",
             "author_physics_knowledge",
+            "author_subject_knowledge",
             "reference_checked",
             "per_part"
           ]
@@ -240,7 +250,10 @@
     "split": {
       "enum": [
         "dev",
-        "test"
+        "test",
+        "college",
+        "primary",
+        "junior"
       ]
     }
   },

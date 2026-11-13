@@ -5,8 +5,25 @@ curriculum questions in Bangla**. v0.1: **Class 9-10 Physics (পদার্থ
 edition, in the SSC exam's own formats: MCQ, short answer and সৃজনশীল (creative)
 questions with all four parts (ক জ্ঞান, খ অনুধাবন, গ প্রয়োগ, ঘ উচ্চতর দক্ষতা).
 
-> **Status: v0.1 seed, not released.** 80 original items. None is human-verified yet
-> (`verified=false`). Numbers produced now are harness demos, not results.
+> **Status: harness v0.2.** The runner scores class 5 through college.
+> The public files are the Class 9–10 physics dev seed (28 items) and a college
+> seed (43 original schema 0.2 items: HSC science, commerce, arts, plus Bangla,
+> English and ICT), plus a small class 5 seed and a class 6–8 seed. Item text
+> is CC BY 4.0. None is two-reviewer verified (`verified=false`). A band's pass
+> line stays empty until that band is checked. College topic ids are still
+> provisional: nctb-data 0.1.0 has no HSC bundle.
+> See [docs/harness.md](docs/harness.md), [docs/subjects.md](docs/subjects.md)
+> and [docs/licensing.md](docs/licensing.md).
+
+```bash
+uv run banglaedu-bench subjects          # every subject, class and stream
+uv run banglaedu-bench coverage dev      # which of those slots have questions
+uv run banglaedu-bench run --model mock-oracle --split dev
+```
+
+A comparable run uses temperature 0 and 1024 tokens. The judge must be a different
+model from the one under test. The report is four bands (primary, junior, SSC,
+college), then stream and subject. One average is not a pass.
 
 ## Why
 
@@ -20,7 +37,7 @@ with-vs-without-MCP grounding comparison. See [docs/research.md](docs/research.m
 
 ```bash
 uv sync
-uv run banglaedu-bench validate dev                 # schema + recompute numeric keys
+uv run banglaedu-bench validate dev college primary junior  # schema + numeric keys
 uv run banglaedu-bench stats dev
 uv run banglaedu-bench run --model mock-oracle --split dev     # offline, 100%
 uv run banglaedu-bench run --model ollama:qwen2.5:7b --split dev   # free, local
@@ -37,11 +54,15 @@ llama.cpp and OpenRouter free models.
 | Path | What |
 |---|---|
 | `src/banglaedu_bench/` | schema, scorers, adapters, judge, harness, MCP grounding, leaderboard, review and calibration tools |
-| `data/dev/dev.jsonl` | public dev split (28 items) |
+| `data/dev/dev.jsonl` | public physics dev split (28 items) |
+| `data/dev/college.jsonl` | public college seed (43 items, schema 0.2, unverified) |
+| `data/dev/primary.jsonl` | public class 5 seed (unverified, provisional topic ids) |
+| `data/dev/junior.jsonl` | public class 6–8 seed (unverified, provisional topic ids) |
+| `data/topic_gap.csv` | college and school topic ids with no shared nctb-data id |
 | `data/dev/test_commitments.txt` | SHA-256 of each private test item |
 | `data/private/` | **private, gitignored**: test split (52), item sources, full review sheet |
 | `data/topic_ids.csv` | the one topic-id mapping file (provisional → shared `nctb-data` ids) |
-| `review/` | dev review sheet, judge-calibration template |
+| `review/` | review sheets, author rechecks, pending judge sheet, baseline status |
 | `schema/item.schema.json` | item format |
 | `hf/README.md` | Hugging Face dataset card draft |
 | `docs/` | research, design, running, review workflow, licensing |
@@ -79,7 +100,7 @@ uv run python scripts/build_seed.py      # rebuild splits from data/private/sour
 
 ## Licence
 
-Code: MIT ([LICENSE](LICENSE)). Data: to be decided by the owner, proposed CC BY 4.0
+Code: MIT ([LICENSE](LICENSE)). Item text: CC BY 4.0
 ([docs/licensing.md](docs/licensing.md)). NCTB textbooks are © NCTB; this repository
 contains no textbook text.
 

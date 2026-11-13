@@ -1,7 +1,13 @@
 # Review workflow and pre-release checklist
 
-Nothing in v0.1 is human-verified. All 80 items ship `verified=false`. An item becomes
-`verified=true` only through the two-reviewer process below.
+Nothing is human-verified. An item becomes `verified=true` only through the
+two-reviewer process below.
+
+A technical audit of the 28 public physics items is in
+[review/physics_dev_audit.md](../review/physics_dev_audit.md) and
+`review/physics_dev_r1.csv`. Reviewer 1 marked every row `revise`. Reviewer 2
+is blank. One key needs a wording fix (`bebench-phy-070` part ক) in the private
+source, then a rebuild. Do not set `verified=true` from that sheet.
 
 ## 1. Who reviews
 
@@ -45,6 +51,25 @@ An adjudicator (the owner or a third teacher) settles disagreements.
 Target before publishing: verdict kappa ≥ 0.6 and answer-key agreement ≥ 95%. If lower,
 tighten the guidelines and re-review rather than publishing.
 
+## 2a. College, primary, and junior sheets
+
+The 43 college items are `data/dev/college.jsonl`. Their topic ids are provisional.
+nctb-data 0.1.0 publishes structure for Class 9–10 physics only
+(`nctb:phy:c9-10:bn` and `nctb:phy:c9-10:en`), so `data/topic_gap.csv` leaves
+`shared_topic_id` empty and sets status `no_nctb_data_bundle`. Do not invent a
+shared id. `scripts/align_topic_ids.py` stays on the physics mapping.
+
+`review/review_sheet_college.csv` is the blank two-reviewer sheet.
+`review/college_r1.csv` is an author recheck: reviewer 1 is `author-recheck`,
+every verdict is `revise`, and `syllabus_ok` is `no`. Reviewer 2 is blank.
+`review-apply` does not set `verified=true` from that file. Two teachers still
+have to fill the sheet on their own.
+
+Primary (`data/dev/primary.jsonl`) and junior (`data/dev/junior.jsonl`) use the
+same loop: a blank sheet plus an author recheck, both unverified. Religion,
+physical education, agriculture, home science, fine arts, career education, and
+Arabic slots stay empty until a subject teacher writes them.
+
 ## 3. Judge calibration (50 human-scored answers)
 
 1. Run 2-3 real models on dev or test so there are real answers to grade.
@@ -54,9 +79,15 @@ tighten the guidelines and re-review rather than publishing.
 3. A teacher fills `human_score` (integer, 0..max_marks) and `human_grader`, without seeing
    any judge output. Ideally a second teacher grades too, for a human-human baseline.
 4. `uv run banglaedu-bench calib-run data/private/review/judge_calibration_sheet.csv --judge ollama:<model> --report review/judge_calibration_report.json`
-5. Accept the judge if pass/fail kappa ≥ 0.6 and within-1-mark agreement ≥ 90%; otherwise
-   change the judge model or prompt (bump `JUDGE_PROMPT_VERSION`) and repeat on fresh
-   answers.
+5. Accept the judge if at least 50 answers were compared, pass/fail kappa ≥ 0.6, and
+   within-1-mark agreement ≥ 90%. `calib-run` prints `judge not accepted` and exits 2
+   when that bar is missed. Change the judge model or prompt (bump `JUDGE_PROMPT_VERSION`)
+   and repeat on fresh answers.
+
+`review/judge_calibration_pending.csv` is not that acceptance. It holds 50 written
+answers from offline mocks (`mock-random`, `mock-constant`, `mock-grounded`) on the
+public splits. `human_score` is empty. No local model server produced those replies,
+and the private split was not used. A teacher still scores the sheet blind.
 
 ## 4. Items to look at first (flagged by the author)
 
@@ -81,10 +112,10 @@ tighten the guidelines and re-review rather than publishing.
 - [ ] Both reviewers have reviewed all items; agreement report published; only verified items released.
 - [ ] Judge calibrated on 50 human-scored answers; report published next to judged scores.
 - [ ] Topic ids aligned with `nctb-data` (no `t9x` provisional ids left) and `IDS.md` final.
-- [ ] Dataset licence chosen (see `docs/licensing.md`) and written into every item and the card.
+- [x] Dataset licence chosen: CC BY 4.0, written into the public items (`docs/licensing.md`).
+      Reviewer credit, private-test terms, and NCTB permission are still open.
 - [ ] Decide on the reviewer credit / consent wording (names in the card?).
-- [ ] Baselines: 5-8 models, with and without MCP, on the private test split; per-topic table.
+- [ ] Baselines: 5-8 local models, temperature 0, 1024 tokens, with and without MCP, on the private test split. `scripts/run_local_baselines.py` refuses mocks and third-party APIs. The public report keeps primary, junior, SSC, and college in separate columns. This machine has not run it: the private file is absent and no local server is up (`review/baselines_public_report.md`).
 - [ ] Private split backed up privately; `data/private/` confirmed absent from git (`git status`, `git check-ignore`).
 - [ ] Canary present in every released file; commitments regenerated after the last edit.
-- [ ] Re-read the Hugging Face card draft (`hf/README.md`) and fill the TODOs.
-- [ ] Only then: create the GitHub repo and the Hugging Face dataset (not done in v0.1).
+- [ ] Re-read the Hugging Face card (`hf/README.md`) and publish the dataset. The GitHub repo exists. The card is still a draft.

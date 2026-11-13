@@ -14,11 +14,21 @@ import re
 from typing import Any
 
 from . import CANARY
+from .curriculum import (
+    BAND_ID,
+    BAND_TASKS,
+    STREAMS,
+    SUBJECTS,
+    class_band,
+    id_ok,
+    offer_matches,
+    paper_error,
+    topic_ok,
+)
 from .normalize import BN_LABELS
 
-SCHEMA_VERSION = "0.1"
+SCHEMA_VERSIONS = {"0.1", "0.2"}
 
-SUBJECTS = {"physics": "পদার্থবিজ্ঞান"}
 TASK_TYPES = {"mcq", "short_answer", "srijonshil"}
 DIFFICULTIES = {"easy", "medium", "hard"}
 # NCTB's four thinking levels (used for srijonshil parts and as the item level).
@@ -41,8 +51,13 @@ SOURCE_TYPES = {
     "board_past_paper",  # education-board past paper: needs written permission
 }
 NEEDS_PERMISSION = {"licensed_reuse", "textbook_exercise", "board_past_paper"}
-CHECK_METHODS = {"python_expression", "author_physics_knowledge", "reference_checked"}
-SPLITS = {"dev", "test"}
+CHECK_METHODS = {
+    "python_expression",
+    "author_physics_knowledge",
+    "author_subject_knowledge",
+    "reference_checked",
+}
+SPLITS = {"dev", "test", "college", "primary", "junior"}
 
 ID_RE = re.compile(r"^bebench-phy-[0-9]{3}$")
 TOPIC_RE = re.compile(r"^nctb:phy:c9-10:(bn|en):ch[0-9]{2}:t[0-9]{2}(:s[0-9]{2})?$")
@@ -135,6 +150,67 @@ def _check_answer_check(chk: Any, has_numeric: bool, where: str, errs: list[str]
         errs.append(f"{where}: reference_checked needs answer_check.reference")
 
 
+def _check_identity(item: dict, errs: list[str]) -> None:
+    """Schema 0.1 stays Class 9–10 physics. Schema 0.2 follows the catalog."""
+    iid = str(item.get("id", "<no id>"))
+    chapter = item.get("chapter") if isinstance(item.get("chapter"), dict) else {}
+    chapter_number = chapter.get("number")
+    if item.get("schema_version") == "0.1":
+        if not ID_RE.match(iid):
+            errs.append(f"{iid}: id must look like bebench-phy-001")
+        if item.get("class_level") != [9, 10]:
+            errs.append(f"{iid}: schema 0.1 class_level must be [9, 10]")
+        if item.get("subject") != "physics":
+            errs.append(f"{iid}: schema 0.1 subject must be physics")
+        topic = str(item.get("topic_id"))
+        if not TOPIC_RE.match(topic):
+            errs.append(
+                f"{iid}: topic_id must look like nctb:phy:c9-10:bn:ch02:t07 or ...:ch05:t03:s03"
+            )
+        elif isinstance(chapter_number, int) and f":ch{chapter_number:02d}:" not in topic:
+            errs.append(f"{iid}: topic_id chapter does not match chapter.number")
+        if item.get("stream") not in (None, "science"):
+            errs.append(f"{iid}: schema 0.1 physics is the science stream")
+        return
+    if item.get("schema_version") != "0.2":
+        return
+
+    subject = SUBJECTS.get(item.get("subject"))
+    if subject is None:
+        errs.append(f"{iid}: unknown subject {item.get('subject')!r}")
+        return
+    classes = item.get("class_level")
+    if not isinstance(classes, list) or classes != sorted(set(classes)):
+        errs.append(f"{iid}: class_level must be a sorted list of unique class numbers")
+        return
+    band = class_band(classes)
+    if band is None:
+        errs.append(f"{iid}: class_level must sit inside one band: 5, 6–8, 9–10, or 11–12")
+        return
+    stream = item.get("stream")
+    if stream not in STREAMS:
+        errs.append(f"{iid}: stream must be one of {', '.join(STREAMS)}")
+        return
+    if not offer_matches(subject, classes, stream):
+        errs.append(f"{iid}: {subject.key} is not offered to {stream} in class {classes}")
+    message = paper_error(subject, classes, item.get("paper"))
+    if message:
+        errs.append(f"{iid}: {message}")
+    if not id_ok(subject, band, iid):
+        errs.append(f"{iid}: id must look like bebench-{subject.topic_code}-{BAND_ID[band]}-001")
+    language = item.get("language")
+    topic_bad = (
+        isinstance(chapter_number, int)
+        and language in {"bn", "en"}
+        and not topic_ok(subject, band, str(item.get("topic_id")), chapter_number, language)
+    )
+    if topic_bad:
+        errs.append(
+            f"{iid}: topic_id must look like "
+            f"nctb:{subject.topic_code}:{BAND_ID[band]}:{language}:ch{chapter_number:02d}:t01"
+        )
+
+
 def validate_item(item: Any) -> list[str]:
     """Return a list of human-readable errors; empty means valid."""
     if not isinstance(item, dict):
@@ -144,29 +220,19 @@ def validate_item(item: Any) -> list[str]:
     if errs:
         return errs
 
-    if not ID_RE.match(str(iid)):
-        errs.append(f"{iid}: id must look like bebench-phy-001")
     if not VERSION_RE.match(str(item["version"])):
         errs.append(f"{iid}: version tag must be semver like 0.1.0")
-    if item["schema_version"] != SCHEMA_VERSION:
-        errs.append(f"{iid}: schema_version must be {SCHEMA_VERSION}")
+    if item["schema_version"] not in SCHEMA_VERSIONS:
+        errs.append(f"{iid}: schema_version must be one of {sorted(SCHEMA_VERSIONS)}")
     if item["canary"] != CANARY:
         errs.append(f"{iid}: canary string missing or altered")
     if item["language"] not in {"bn", "en"}:
         errs.append(f"{iid}: language must be bn or en")
-    if item["class_level"] != [9, 10]:
-        errs.append(f"{iid}: class_level must be [9, 10] in v0.1")
-    if item["subject"] not in SUBJECTS:
-        errs.append(f"{iid}: subject must be physics in v0.1")
     ch = item["chapter"]
     if not (isinstance(ch, dict) and isinstance(ch.get("number"), int) and _s(ch.get("title_bn"))):
         errs.append(f"{iid}: chapter needs number and title_bn")
-    if not TOPIC_RE.match(str(item["topic_id"])):
-        errs.append(
-            f"{iid}: topic_id must look like nctb:phy:c9-10:bn:ch02:t07 or ...:ch05:t03:s03"
-        )
-    elif isinstance(ch, dict) and f":ch{ch.get('number', 0):02d}:" not in item["topic_id"]:
-        errs.append(f"{iid}: topic_id chapter does not match chapter.number")
+        ch = {}
+    _check_identity(item, errs)
     if not _s(item["question"]):
         errs.append(f"{iid}: empty question")
     if not _s(item["explanation"]):
@@ -178,9 +244,14 @@ def validate_item(item: Any) -> list[str]:
     if item["verified"] is not False and item["verified"] is not True:
         errs.append(f"{iid}: verified must be a boolean")
     if item["split"] not in SPLITS:
-        errs.append(f"{iid}: split must be dev or test")
+        errs.append(f"{iid}: split must be dev, test, college, primary, or junior")
 
     tt = item["task_type"]
+    band = class_band(item["class_level"]) if isinstance(item.get("class_level"), list) else None
+    if tt not in TASK_TYPES:
+        errs.append(f"{iid}: task_type must be one of {sorted(TASK_TYPES)}")
+    elif band is not None and tt not in BAND_TASKS[band]:
+        errs.append(f"{iid}: {band} does not use task_type {tt}")
     has_numeric = False
     if tt == "mcq":
         opts = item.get("options")
@@ -230,8 +301,6 @@ def validate_item(item: Any) -> list[str]:
                 errs.append(f"{iid}: srijonshil max_marks must be 10")
         if not isinstance(item["marking_rubric"], list):
             errs.append(f"{iid}: srijonshil marking_rubric must be a list (may be summary)")
-    else:
-        errs.append(f"{iid}: task_type must be one of {sorted(TASK_TYPES)}")
 
     if tt != "srijonshil":
         _check_answer_check(item["answer_check"], has_numeric, iid, errs)

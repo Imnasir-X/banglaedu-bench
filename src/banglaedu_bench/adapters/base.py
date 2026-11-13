@@ -20,6 +20,8 @@ def make_adapter(spec: str, **kwargs) -> Adapter:
 
     mock-oracle | mock-random | mock-constant | mock-grounded | mock-judge
     openrouter:<model>        (needs OPENROUTER_API_KEY)
+    openai:<model>            (needs OPENAI_API_KEY)
+    groq:<model>              (needs GROQ_API_KEY)
     ollama:<model>            (local, free: http://localhost:11434/v1)
     vllm:<model>              (local: http://localhost:8000/v1)
     openai-compat:<model>     (set --base-url and optionally --api-key-env)

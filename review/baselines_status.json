@@ -1,0 +1,32 @@
+{
+  "ran": false,
+  "ready": false,
+  "private_test_present": false,
+  "local_server": false,
+  "ollama_11434": false,
+  "vllm_8000": false,
+  "mcp_bundle": null,
+  "third_party_api": false,
+  "temperature": 0.0,
+  "max_tokens": 1024,
+  "judge": null,
+  "judge_note": "The judge is not accepted, so written answers stay out of the percent.",
+  "models": [],
+  "blocked": [
+    "private test file is not on this machine",
+    "no local server on 127.0.0.1:11434 or 127.0.0.1:8000",
+    "no local models are configured"
+  ],
+  "private_items_by_band": {
+    "primary": 0,
+    "junior": 0,
+    "ssc": 52,
+    "hsc": 0
+  },
+  "bands": [
+    "primary",
+    "junior",
+    "ssc",
+    "hsc"
+  ]
+}

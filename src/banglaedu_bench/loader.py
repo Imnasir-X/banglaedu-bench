@@ -9,10 +9,21 @@ from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DEV_PATH = PROJECT_ROOT / "data" / "dev" / "dev.jsonl"
+# Public college seed (schema 0.2). Separate from the physics dev file so the
+# SSC seed stays the file the v0.1 tests and commitments describe.
+COLLEGE_PATH = PROJECT_ROOT / "data" / "dev" / "college.jsonl"
+PRIMARY_PATH = PROJECT_ROOT / "data" / "dev" / "primary.jsonl"
+JUNIOR_PATH = PROJECT_ROOT / "data" / "dev" / "junior.jsonl"
 # The test split is private: gitignored, never published, never sent to
 # third-party APIs by maintainers except for scored evaluation runs.
 TEST_PATH = PROJECT_ROOT / "data" / "private" / "test.jsonl"
-SPLIT_PATHS = {"dev": DEV_PATH, "test": TEST_PATH}
+SPLIT_PATHS = {
+    "dev": DEV_PATH,
+    "test": TEST_PATH,
+    "college": COLLEGE_PATH,
+    "primary": PRIMARY_PATH,
+    "junior": JUNIOR_PATH,
+}
 
 
 class DataError(ValueError):
@@ -49,7 +60,7 @@ def load_items(
     verified_only: bool = False,
     limit: int | None = None,
 ) -> list[dict]:
-    """Load items from a split name ('dev'/'test') or a JSONL path, with filters."""
+    """Load items from a split name ('dev'/'college'/'test') or a JSONL path."""
     items = load_jsonl(resolve_split(split_or_path))
     tts = set(task_types) if task_types else None
     chs = set(chapters) if chapters else None

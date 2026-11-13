@@ -13,19 +13,24 @@ import re
 from .adapters.base import Adapter
 from .normalize import normalize_text
 
-JUDGE_PROMPT_VERSION = "judge-v0.1"
+JUDGE_PROMPT_VERSION = "judge-v0.2"
 
 JUDGE_SYSTEM = (
-    "You are a strict, fair SSC (Class 9-10) physics examiner in Bangladesh. "
-    "You grade a student's written answer in Bangla against a reference answer and a "
-    "marking rubric. Award only marks the rubric allows. Do not reward length, style or "
-    "English vs Bangla wording; reward correct physics and the rubric criteria. "
-    'Reply with JSON only: {"score": <number>, "reason": "<one short sentence>"}.'
+    "You are a strict, fair examiner for {exam}. "
+    "You grade a student's written answer against a reference answer and a marking rubric. "
+    "Award only marks the rubric allows. Do not reward length or style. "
+    "Bangla and English wording are equal when the subject matter is right. "
+    'Reply with JSON only: {{"score": <number>, "reason": "<one short sentence>"}}.'
 )
 
 
 def build_judge_messages(
-    question: str, reference: str, rubric: list[dict], max_marks: float, answer: str
+    question: str,
+    reference: str,
+    rubric: list[dict],
+    max_marks: float,
+    answer: str,
+    exam: str = "Bangladesh NCTB",
 ) -> list[dict]:
     rubric_lines = "\n".join(f"- ({c['marks']} marks) {c['criterion']}" for c in rubric)
     user = (
@@ -35,7 +40,10 @@ def build_judge_messages(
         f"Student answer:\n{answer}\n\n"
         f"Give an integer score from 0 to {int(max_marks)}."
     )
-    return [{"role": "system", "content": JUDGE_SYSTEM}, {"role": "user", "content": user}]
+    return [
+        {"role": "system", "content": JUDGE_SYSTEM.format(exam=exam or "Bangladesh NCTB")},
+        {"role": "user", "content": user},
+    ]
 
 
 def parse_judge_score(text: str, max_marks: float) -> float | None:
@@ -65,9 +73,15 @@ class Judge:
         return self.adapter.name
 
     def grade(
-        self, question: str, reference: str, rubric: list[dict], max_marks: float, answer: str
+        self,
+        question: str,
+        reference: str,
+        rubric: list[dict],
+        max_marks: float,
+        answer: str,
+        exam: str = "",
     ) -> tuple[float | None, str]:
-        msgs = build_judge_messages(question, reference, rubric, max_marks, answer)
+        msgs = build_judge_messages(question, reference, rubric, max_marks, answer, exam=exam)
         raw = self.adapter.generate(
             msgs,
             meta={

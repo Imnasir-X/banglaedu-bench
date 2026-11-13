@@ -18,9 +18,12 @@ from .base import Adapter
 
 PRESETS = {
     "openrouter": {"base_url": "https://openrouter.ai/api/v1", "key_env": "OPENROUTER_API_KEY"},
+    "openai": {"base_url": "https://api.openai.com/v1", "key_env": "OPENAI_API_KEY"},
+    "groq": {"base_url": "https://api.groq.com/openai/v1", "key_env": "GROQ_API_KEY"},
     "ollama": {"base_url": "http://localhost:11434/v1", "key_env": None},
     "vllm": {"base_url": "http://localhost:8000/v1", "key_env": "VLLM_API_KEY"},
 }
+_KEY_REQUIRED = {"openrouter", "openai", "groq"}
 
 
 class OpenAICompatAdapter(Adapter):
@@ -54,8 +57,8 @@ class OpenAICompatAdapter(Adapter):
             raise ValueError("openai-compat adapter needs --base-url")
         key_env = kwargs.pop("api_key_env", None) or preset["key_env"]
         api_key = os.environ.get(key_env) if key_env else None
-        if provider == "openrouter" and not api_key:
-            raise RuntimeError("Set OPENROUTER_API_KEY to use OpenRouter (free models need it too)")
+        if provider in _KEY_REQUIRED and not api_key:
+            raise RuntimeError(f"Set {key_env} to use {provider}")
         headers = {}
         if provider == "openrouter":
             headers = {"HTTP-Referer": "https://github.com/Imnasir-X", "X-Title": "BanglaEdu Bench"}

@@ -10,11 +10,13 @@ from pathlib import Path
 
 from . import __version__
 from .adapters.base import Adapter
+from .curriculum import BAND_ORDER, STREAM_ORDER, describe, exam_label
 from .grounding import Grounding, NoGrounding
 from .judge import JUDGE_PROMPT_VERSION, Judge
 from .loader import item_hash, load_jsonl
 from .normalize import normalize_text
 from .prompts import PROMPT_VERSION, mcq_messages, short_messages, srijonshil_messages
+from .protocol import protocol_card, same_model, threshold_block
 from .scoring import Score, score_mcq, score_numeric, score_text
 
 
@@ -25,7 +27,13 @@ def _auto_text_key(key: dict) -> bool:
 
 
 def _score_written(
-    text: str, question: str, key: dict, rubric: list[dict], marks: float, judge: Judge | None
+    text: str,
+    question: str,
+    key: dict,
+    rubric: list[dict],
+    marks: float,
+    judge: Judge | None,
+    exam: str = "",
 ) -> Score:
     """Numeric keys: auto-scored (full marks or 0). Text keys: judge if given, else match."""
     if "numeric" in key:
@@ -34,7 +42,7 @@ def _score_written(
         # Explanatory answer and no judge: not auto-scorable; excluded from the totals.
         return Score(0, marks, "needs_judge")
     if judge is not None:
-        score, raw = judge.grade(question, key["text"], rubric, marks, text)
+        score, raw = judge.grade(question, key["text"], rubric, marks, text, exam=exam)
         if score is None:
             return Score(0, marks, "judge", detail=f"unparsed judge output: {raw[:200]}")
         return Score(score, marks, "judge", detail=raw[:300])
@@ -43,17 +51,25 @@ def _score_written(
 
 def eval_item(item: dict, model: Adapter, grounding: Grounding, judge: Judge | None = None) -> dict:
     """Evaluate one item; returns a prediction record."""
-    ctx = grounding.context(item, item["question"]) if grounding.mode != "none" else ""
-    meta = {"item": item, "grounding": ctx}
     rec: dict = {
-        "id": item["id"],
-        "task_type": item["task_type"],
-        "topic_id": item["topic_id"],
-        "chapter": item["chapter"]["number"],
-        "thinking_level": item["thinking_level"],
-        "grounded": bool(ctx),
+        "id": item.get("id"),
+        "task_type": item.get("task_type"),
+        "topic_id": item.get("topic_id"),
+        "chapter": (item.get("chapter") or {}).get("number"),
+        "thinking_level": item.get("thinking_level"),
     }
     try:
+        info = describe(item)
+        exam = exam_label(info)
+        rec.update(
+            class_band=info["class_band"],
+            subject=info["subject"],
+            stream=info["stream"],
+            class_level=info["class_level"],
+        )
+        ctx = grounding.context(item, item["question"]) if grounding.mode != "none" else ""
+        meta = {"item": item, "grounding": ctx}
+        rec["grounded"] = bool(ctx)
         if item["task_type"] == "mcq":
             out = model.generate(mcq_messages(item, ctx), meta=meta)
             sc = score_mcq(out, item)
@@ -67,6 +83,7 @@ def eval_item(item: dict, model: Adapter, grounding: Grounding, judge: Judge | N
                 item["marking_rubric"],
                 item["max_marks"],
                 judge,
+                exam,
             )
             rec.update(output=out, **_flat(sc))
         else:
@@ -82,6 +99,7 @@ def eval_item(item: dict, model: Adapter, grounding: Grounding, judge: Judge | N
                     part["marking_rubric"],
                     part["marks"],
                     judge,
+                    exam,
                 )
                 parts.append(
                     {
@@ -119,12 +137,19 @@ def summarize(preds: list[dict]) -> dict:
     for p in preds:
         needs_judge += int(p.get("method") == "needs_judge")
         needs_judge += p.get("n_parts_needing_judge", 0)
-        if p.get("method") == "needs_judge":
+        # A creative item whose every part still needs a judge has no marks to add.
+        unscored_item = p.get("method") == "parts" and not p.get("max_marks")
+        if p.get("method") == "error":
+            errors += 1
+        if p.get("method") in {"needs_judge", "error"} or unscored_item:
             continue
         for key, val in (
             ("task_type", p["task_type"]),
-            ("chapter", f"ch{p['chapter']:02d}"),
+            ("chapter", f"ch{int(p['chapter']):02d}"),
             ("topic", p["topic_id"]),
+            ("class_band", p.get("class_band") or "unknown"),
+            ("subject", p.get("subject") or "unknown"),
+            ("stream", p.get("stream") or "unknown"),
         ):
             g = groups[key][val]
             g["score"] += p["score"]
@@ -143,15 +168,28 @@ def summarize(preds: list[dict]) -> dict:
         total["score"] += p["score"]
         total["max"] += p["max_marks"]
         total["n"] += 1
-        errors += p.get("method") == "error"
+
+    for band in BAND_ORDER:
+        groups["class_band"].setdefault(band, {"score": 0.0, "max": 0.0, "n": 0})
 
     def pct(b):
         return round(100 * b["score"] / b["max"], 2) if b["max"] else None
 
+    def ordered(group: str, mapping: dict) -> list:
+        if group == "class_band":
+            first = [name for name in BAND_ORDER if name in mapping]
+        elif group == "stream":
+            first = [name for name in STREAM_ORDER if name in mapping]
+        else:
+            first = []
+        rest = sorted(name for name in mapping if name not in first)
+        return first + rest
+
     by = {
         k: {
             name: {"pct": pct(b), "n": b["n"], "score": b["score"], "max": b["max"]}
-            for name, b in sorted(v.items())
+            for name in ordered(k, v)
+            for b in [v[name]]
         }
         for k, v in groups.items()
     }
@@ -180,6 +218,10 @@ def run(
     limit: int | None = None,
     resume: bool = True,
 ) -> dict:
+    if same_model(model, judge):
+        raise ValueError(
+            f"judge {judge.name!r} is the model under test. Use a different model to grade."
+        )
     grounding = grounding or NoGrounding()
     items = load_jsonl(data_path)[:limit] if limit else load_jsonl(data_path)
     out_dir = Path(out_dir)
@@ -221,6 +263,10 @@ def run(
         "timestamp_utc": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
         **summarize(preds),
     }
+    summary["protocol"] = protocol_card(model, judge)
+    summary["threshold"] = threshold_block(
+        items, preds, model, summary.get("by", {}).get("class_band", {})
+    )
     (out_dir / "summary.json").write_text(
         json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8"
     )

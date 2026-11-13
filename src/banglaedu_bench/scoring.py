@@ -23,7 +23,12 @@ from .normalize import (
 
 _BN_CHAR = r"\u0980-\u09FF"
 _LABEL = r"[কখগঘ]|[A-Da-d]|[1-4]|[১-৪]"
-_MARKER = r"(?:সঠিক\s*উত্তর|উত্তর|correct\s*answer|correct\s*option|final\s*answer|answer|ans)"
+# "ans" is a marker, and it also sits inside English words such as "transfer".
+# The Latin markers have to be whole words. Bangla "উত্তর" is its own script.
+_MARKER = (
+    r"(?:সঠিক\s*উত্তর|উত্তর|"
+    r"(?<![A-Za-z])(?:correct\s*answer|correct\s*option|final\s*answer|answer|ans)(?![A-Za-z]))"
+)
 _MARKER_RE = re.compile(
     _MARKER
     + r"\s*(?:হলো|হল|হচ্ছে|is|:|：|-|–|=)?\s*(?:হলো|হল|is|:)?\s*[\(\[]?\s*("

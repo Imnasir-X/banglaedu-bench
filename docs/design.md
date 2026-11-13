@@ -1,9 +1,13 @@
 # Design (v0.1)
 
-Scope for v0.1, from the owner spec (2026-11-07): **Class 9-10 Physics only, Bangla
-primary**. Quality over volume: a 60-100 item seed with keys checked by code, every item
-`verified=false` until two human reviewers accept it. The 300-500 item set comes after
-review, not before.
+Scope for the v0.1 question seed, from the owner spec (2026-11-07): **Class 9-10
+Physics only, Bangla primary**. Quality over volume: a 60-100 item seed with keys
+checked by code, every item `verified=false` until two human reviewers accept it.
+
+Harness v0.2 (see [harness.md](harness.md) and [subjects.md](subjects.md)) scores
+class 5 through college, every subject in science, commerce and arts. Schema 0.1
+items stay valid. New items use schema 0.2. The public questions are still the
+physics seed. No pass mark is published until those items are checked.
 
 ## 1. Repository layout
 
@@ -35,8 +39,11 @@ review/                    dev-only review sheet, templates, reviewer guide
 
 ## 2. Item schema (v0.1)
 
-Every item has: `id`, `version` (semver tag, `0.1.0`), `schema_version`, `canary`,
-`language`, `class_level` `[9, 10]`, `subject` `physics`, `chapter {number, title_bn,
+Schema 0.1 items have: `id` like `bebench-phy-001`, `schema_version` `0.1`,
+`class_level` `[9, 10]`, `subject` `physics`. Schema 0.2 items name any catalog
+subject, a stream (`common`, `science`, `commerce`, `arts`), and a class band.
+Every item has: `id`, `version` (semver tag), `schema_version`, `canary`,
+`language`, `class_level`, `subject`, `chapter {number, title_bn,
 edition}`, `topic_id`, `concept_key`, `topic_id_status`, `task_type`, `question`,
 `answer_key`, `marking_rubric`, `max_marks`, `explanation`, `difficulty`
 (easy/medium/hard), `thinking_level` (knowledge/comprehension/application/

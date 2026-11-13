@@ -66,14 +66,23 @@ def _unit(it: dict, part: dict | None, answer: str, model: str) -> dict:
     }
 
 
+def _item_paths(items_path: str | Path | list[str | Path]) -> list[Path]:
+    if isinstance(items_path, (str, Path)):
+        return [Path(items_path)]
+    return [Path(path) for path in items_path]
+
+
 def make_sheet(
-    items_path: str | Path,
+    items_path: str | Path | list[str | Path],
     pred_paths: list[str | Path],
     out: str | Path,
     n: int = 50,
     seed: int = 13,
 ) -> int:
-    items = load_jsonl(items_path)
+    """Sample written answers. `items_path` may be one JSONL or a list of them."""
+    items: list[dict] = []
+    for path in _item_paths(items_path):
+        items.extend(load_jsonl(path))
     units: list[dict] = []
     for pp in pred_paths:
         summary = Path(pp).with_name("summary.json")
@@ -129,6 +138,40 @@ def agreement_stats(human: list[float], judge: list[float], max_marks: list[floa
     }
 
 
+def _with_decision(report: dict) -> dict:
+    report["decision"] = judge_decision(report)
+    return report
+
+
+# docs/review.md: accept a judge only at these three bars together.
+MIN_HUMAN_SCORED = 50
+MIN_PASS_FAIL_KAPPA = 0.6
+MIN_WITHIN_1_PCT = 90.0
+
+
+def judge_decision(report: dict) -> dict:
+    """Whether a judge may be used for published scores.
+
+    A teacher has to have scored at least 50 answers, and those 50 have to be
+    the ones in the kappa comparison. Pass/fail kappa must be at least 0.6 and
+    within-1-mark agreement at least 90 percent.
+    """
+    compared = report.get("n")
+    human = report.get("n_human_scored")
+    sample = compared if isinstance(compared, int) else human
+    scored = int(sample or 0)
+    reasons = []
+    if scored < MIN_HUMAN_SCORED:
+        reasons.append(f"{scored} human-scored answers; the bar is {MIN_HUMAN_SCORED}")
+    kappa = report.get("pass_fail_kappa")
+    if kappa is None or kappa < MIN_PASS_FAIL_KAPPA:
+        reasons.append("pass/fail kappa is below 0.6")
+    within = report.get("within_1_mark_pct")
+    if within is None or within < MIN_WITHIN_1_PCT:
+        reasons.append("within-1-mark agreement is below 90%")
+    return {"accepted": not reasons, "reasons": reasons}
+
+
 def run_calibration(sheet: str | Path, judge: Judge, out_csv: str | Path | None = None) -> dict:
     rows = read_sheet(sheet)
     human, jud, mx = [], [], []
@@ -150,12 +193,14 @@ def run_calibration(sheet: str | Path, judge: Judge, out_csv: str | Path | None 
         human.append(float(r["human_score"]))
         jud.append(score)
         mx.append(m)
-    report = {
-        "judge": judge.name,
-        "n_rows": len(rows),
-        "n_human_scored": sum(1 for r in rows if str(r.get("human_score", "")).strip()),
-        **agreement_stats(human, jud, mx),
-    }
+    report = _with_decision(
+        {
+            "judge": judge.name,
+            "n_rows": len(rows),
+            "n_human_scored": sum(1 for r in rows if str(r.get("human_score", "")).strip()),
+            **agreement_stats(human, jud, mx),
+        }
+    )
     if out_csv:
         with Path(out_csv).open("w", encoding="utf-8-sig", newline="") as fh:
             w = csv.DictWriter(fh, fieldnames=SHEET_COLS)

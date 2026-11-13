@@ -45,7 +45,7 @@ SYLLABUS_REF = (
     "NCTB Class 9-10 subject structure (National Curriculum 2012 basis, effective 2025): "
     "https://nctb.portal.gov.bd/site/page/d61acf4b-951c-4a7c-abcd-666870078977"
 )
-DATA_LICENSE = "CC BY 4.0 (proposed; owner to confirm)"
+DATA_LICENSE = "CC BY 4.0"
 DEV_EVERY = 3  # within each task type, index % 3 == 0 -> dev, else test
 
 

@@ -88,6 +88,7 @@ def test_calibration_pipeline(tmp_path):
     rep = run_calibration(sheet, Judge(make_adapter("mock-judge")), tmp_path / "scored.csv")
     assert rep["n"] == n
     assert rep["exact_agreement_pct"] == 100.0
+    assert rep["decision"]["accepted"] is False
 
 
 def test_agreement_stats_shape():
